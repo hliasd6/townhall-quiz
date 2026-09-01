@@ -474,8 +474,11 @@ renderSlide = function () {
 };
 
 /* ================= JOIN PANEL / QR ================= */
+const LIVE_AUDIENCE_URL = "https://hliasd6.github.io/townhall-quiz/audience.html";
 function setupAudienceUrl() {
-    const saved = localStorage.getItem('audienceUrl') || (location.href.replace(/moderator\.html.*$/, 'audience.html'));
+    const isHosted = /^https?:/.test(location.href);
+    const fallback = isHosted ? location.href.replace(/moderator\.html.*$/, 'audience.html') : LIVE_AUDIENCE_URL;
+    const saved = localStorage.getItem('audienceUrl') || fallback;
     document.getElementById('audienceUrlInput').value = saved;
     renderQR(saved);
 }
