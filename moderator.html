@@ -63,23 +63,22 @@
     }
     .icon-btn:hover { border-color: var(--deloitte-green); background: rgba(134,188,37,0.12); }
 
-    /* ---------- QR / link panel ---------- */
+    /* ---------- QR overlay (shows ONLY the QR code, nothing else) ---------- */
     #joinPanel {
-        display: flex; gap: 24px; align-items: center; flex-wrap: wrap;
-        padding: 16px 28px; background: var(--bg-color-2); border-bottom: 1px solid #222;
+        display: none; position: fixed; inset: 0; z-index: 999;
+        background: rgba(0,0,0,0.92);
+        align-items: center; justify-content: center; cursor: pointer;
     }
-    #joinPanel .qrbox { background: white; padding: 8px; border-radius: 10px; line-height: 0; }
-    #joinPanel .info { flex: 1; min-width: 240px; }
-    #joinPanel .info label { display: block; font-size: 12px; color: var(--text-dim); margin-bottom: 4px; }
-    #joinPanel .info input {
-        width: 100%; max-width: 480px; background: var(--bg-color); border: 1px solid #333;
-        color: var(--text-color); padding: 8px 10px; border-radius: 6px; font-size: 13px;
+    #joinPanel .qrbox {
+        background: white; padding: 28px; border-radius: 18px; line-height: 0;
+        box-shadow: 0 0 60px rgba(134,188,37,0.35);
     }
-    #joinPanel .info .hint { font-size: 12px; color: var(--text-dim); margin-top: 6px; }
-    #joinPanel button.small {
-        background: var(--deloitte-green); border: none; color: black; font-weight: 700;
-        padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; margin-top: 8px;
+    #joinPanel .qr-hint {
+        position: absolute; bottom: 40px; left: 0; right: 0; text-align: center;
+        color: var(--text-dim); font-size: 13px; letter-spacing: 0.5px;
     }
+    /* hidden but still present in DOM so the auto-detected audience URL logic keeps working */
+    #audienceUrlInput, #joinPanel .info { display: none; }
 
     /* ---------- Slide area (reused look & feel) ---------- */
     .container { max-width: 900px; margin: 0 auto; padding: 40px 30px; min-height: 45vh; }
@@ -169,12 +168,12 @@
         </div>
     </div>
 
-    <div id="joinPanel" style="display:none;">
+    <div id="joinPanel" onclick="toggleJoinPanel()">
         <div class="qrbox" id="qrcode"></div>
+        <div class="qr-hint">Πάτησε οπουδήποτε για κλείσιμο</div>
         <div class="info">
             <label>Link για το κοινό (ανοίγει στο κινητό):</label>
             <input type="text" id="audienceUrlInput" onchange="saveAudienceUrl()">
-            <div class="hint">Άλλαξε αυτό το link όταν το audience.html φιλοξενηθεί online (π.χ. GitHub Pages URL) και πάτα Ενημέρωση QR.</div>
             <button class="small" onclick="regenerateQR()">Ενημέρωση QR</button>
         </div>
     </div>
@@ -494,7 +493,7 @@ function renderQR(url) {
     const box = document.getElementById('qrcode');
     box.innerHTML = '';
     if (!url) return;
-    try { new QRCode(box, { text: url, width: 180, height: 180 }); } catch (e) { /* qrcode lib not loaded (offline) */ }
+    try { new QRCode(box, { text: url, width: 340, height: 340 }); } catch (e) { /* qrcode lib not loaded (offline) */ }
 }
 function toggleJoinPanel() {
     const p = document.getElementById('joinPanel');
