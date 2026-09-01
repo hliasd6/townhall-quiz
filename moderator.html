@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ψηφιακή Κάρτα Εργασίας — Moderator (Live)</title>
+<style>
+    :root {
+        --deloitte-green: #86BC25;
+        --deloitte-green-dark: #5b8014;
+        --bg-color: #0A0A0A;
+        --bg-color-2: #141414;
+        --text-color: #FFFFFF;
+        --text-dim: #9A9A9A;
+        --error-red: #E3000F;
+        --warn-amber: #C9A227;
+        --info-blue: #2E7DD1;
+    }
+    * { box-sizing: border-box; }
+    body {
+        margin: 0;
+        font-family: 'Segoe UI', 'Open Sans', Arial, sans-serif;
+        background: var(--bg-color);
+        color: var(--text-color);
+        min-height: 100vh;
+    }
+
+    /* ---------- Passphrase gate ---------- */
+    #gate {
+        position: fixed; inset: 0; z-index: 2000;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        background: var(--bg-color); gap: 18px;
+    }
+    #gate h1 { color: var(--deloitte-green); font-size: 22px; margin: 0; }
+    #gate input {
+        background: var(--bg-color-2); border: 1px solid #333; color: var(--text-color);
+        padding: 12px 16px; border-radius: 8px; font-size: 16px; width: 260px; text-align: center;
+    }
+    #gate button {
+        background: var(--deloitte-green); border: none; color: black; font-weight: 700;
+        padding: 12px 28px; border-radius: 8px; font-size: 15px; cursor: pointer;
+    }
+    #gate .err { color: var(--error-red); font-size: 13px; min-height: 16px; }
+
+    /* ---------- Header ---------- */
+    .header {
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 14px 28px; border-bottom: 2px solid var(--deloitte-green); flex-wrap: wrap; gap: 10px;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand .dot { width: 12px; height: 12px; border-radius: 50%; background: var(--deloitte-green); }
+    .brand h1 { font-size: 19px; margin: 0; }
+    .brand .tag { color: var(--text-dim); font-size: 13px; }
+    .hdr-controls { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+    .pill {
+        display: flex; align-items: center; gap: 6px; background: var(--bg-color-2);
+        border: 1px solid #262626; border-radius: 20px; padding: 6px 14px; font-size: 13px;
+    }
+    .pill .n { color: var(--deloitte-green); font-weight: 800; font-size: 15px; }
+    .icon-btn {
+        background: transparent; border: 1px solid #333; color: var(--text-color);
+        width: 38px; height: 38px; border-radius: 8px; cursor: pointer; font-size: 16px;
+    }
+    .icon-btn:hover { border-color: var(--deloitte-green); background: rgba(134,188,37,0.12); }
+
+    /* ---------- QR / link panel ---------- */
+    #joinPanel {
+        display: flex; gap: 24px; align-items: center; flex-wrap: wrap;
+        padding: 16px 28px; background: var(--bg-color-2); border-bottom: 1px solid #222;
+    }
+    #joinPanel .qrbox { background: white; padding: 8px; border-radius: 10px; line-height: 0; }
+    #joinPanel .info { flex: 1; min-width: 240px; }
+    #joinPanel .info label { display: block; font-size: 12px; color: var(--text-dim); margin-bottom: 4px; }
+    #joinPanel .info input {
+        width: 100%; max-width: 480px; background: var(--bg-color); border: 1px solid #333;
+        color: var(--text-color); padding: 8px 10px; border-radius: 6px; font-size: 13px;
+    }
+    #joinPanel .info .hint { font-size: 12px; color: var(--text-dim); margin-top: 6px; }
+    #joinPanel button.small {
+        background: var(--deloitte-green); border: none; color: black; font-weight: 700;
+        padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; margin-top: 8px;
+    }
+
+    /* ---------- Slide area (reused look & feel) ---------- */
+    .container { max-width: 900px; margin: 0 auto; padding: 40px 30px; min-height: 45vh; }
+    .scenario-title {
+        display: flex; align-items: center; gap: 10px; color: var(--deloitte-green);
+        font-size: 15px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 18px;
+    }
+    .badge-icon { font-size: 22px; }
+    .question { font-size: 24px; font-weight: 600; margin-bottom: 26px; line-height: 1.4; }
+    .options { display: flex; flex-direction: column; gap: 14px; }
+    .option-row {
+        display: flex; align-items: center; gap: 14px; padding: 16px 20px; border-radius: 10px;
+        border: 1px solid #333; background: var(--bg-color-2); font-size: 17px;
+    }
+    .option-row .key-hint {
+        display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px;
+        border-radius: 50%; background: #262626; font-size: 13px; font-weight: 700; flex-shrink: 0;
+    }
+    .option-row .bar-wrap { flex: 1; }
+    .option-row .bar-track { background: #262626; border-radius: 6px; height: 10px; overflow: hidden; margin-top: 8px; }
+    .option-row .bar-fill { height: 100%; background: var(--info-blue); transition: width 0.5s ease; }
+    .option-row.correct { border-color: var(--deloitte-green); background: rgba(134,188,37,0.12); }
+    .option-row.correct .bar-fill { background: var(--deloitte-green); }
+    .option-row .pct { font-size: 13px; color: var(--text-dim); margin-top: 4px; display: block; }
+    .vote-counter { color: var(--text-dim); font-size: 15px; margin: 10px 0 20px; }
+    .explanation {
+        margin-top: 26px; padding: 20px; border-radius: 10px; border-left: 4px solid var(--deloitte-green);
+        background: rgba(255,255,255,0.04); font-size: 17px; line-height: 1.55; display: none;
+    }
+    .explanation.show { display: block; }
+    .explanation .citation { display: block; margin-top: 10px; font-size: 12.5px; color: var(--text-dim); font-style: italic; }
+
+    .slide-plain h2 { color: var(--deloitte-green); font-size: 26px; }
+    .slide-plain p { font-size: 18px; color: var(--text-dim); line-height: 1.6; }
+    .agenda-list { list-style: none; padding: 0; margin: 0; max-width: 640px; text-align: left; }
+    .agenda-list li { display: flex; align-items: center; gap: 14px; padding: 12px 0; border-bottom: 1px solid #222; }
+    .agenda-list .a-icon { font-size: 22px; width: 30px; text-align: center; }
+    .agenda-list .a-count { margin-left: auto; color: var(--text-dim); font-size: 13px; }
+    .rules-list { list-style: none; padding: 0; margin: 20px 0; }
+    .rules-list li { padding: 12px 0; border-bottom: 1px solid #222; font-size: 17px; line-height: 1.5; }
+    .final-score { margin-top: 20px; }
+    .final-score .fs-num { font-size: 46px; font-weight: 800; color: var(--deloitte-green); }
+    .final-score .fs-tier { font-size: 17px; color: var(--text-dim); margin-top: 4px; }
+
+    /* ---------- Bottom controls ---------- */
+    .controls {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 18px 28px; border-top: 1px solid #222; gap: 14px; flex-wrap: wrap;
+    }
+    .nav-btn {
+        background: transparent; border: 1px solid #333; color: var(--text-color); padding: 12px 24px;
+        border-radius: 8px; cursor: pointer; font-size: 15px;
+    }
+    .nav-btn:hover { background: white; color: black; }
+    .nav-btn.primary { background: var(--deloitte-green); border-color: var(--deloitte-green); color: black; font-weight: 700; }
+    .nav-btn.primary:hover { background: #6a961d; }
+    .nav-btn.primary.locked { background: #2a2a2a; border-color: #444; color: #777; cursor: not-allowed; }
+    .nav-btn.reveal { background: var(--warn-amber); border-color: var(--warn-amber); color: black; font-weight: 700; }
+    .nav-btn.reveal:disabled { background: #2a2a2a; border-color: #444; color: #777; cursor: not-allowed; }
+    .nav-btn.danger { border-color: var(--error-red); color: var(--error-red); }
+    .nav-btn.danger:hover { background: var(--error-red); color: white; }
+    .progress-text { text-align: center; color: var(--text-dim); font-size: 13px; }
+</style>
+</head>
+<body>
+
+<div id="gate">
+    <h1>🔒 Moderator Access</h1>
+    <input type="password" id="gatePass" placeholder="Κωδικός συντονιστή" autofocus>
+    <button onclick="tryUnlock()">Είσοδος</button>
+    <div class="err" id="gateErr"></div>
+</div>
+
+<div id="app" style="display:none;">
+    <div class="header">
+        <div class="brand">
+            <span class="dot"></span>
+            <h1>Ψηφιακή Κάρτα Εργασίας</h1>
+            <span class="tag" id="sectionTag">Live Townhall Quiz — Moderator</span>
+        </div>
+        <div class="hdr-controls">
+            <div class="pill">👥 Συνδεδεμένοι <span class="n" id="presenceCount">0</span></div>
+            <div class="pill">🖐 Απαντήσεις <span class="n" id="voteCount">0</span></div>
+            <button class="icon-btn" id="qrToggleBtn" onclick="toggleJoinPanel()" title="Εμφάνιση link/QR">🔗</button>
+            <button class="icon-btn" onclick="toggleMute()" id="muteBtn" title="Ήχος">🔊</button>
+            <button class="icon-btn" onclick="resetSession()" title="Επαναφορά συνεδρίας">↺</button>
+        </div>
+    </div>
+
+    <div id="joinPanel" style="display:none;">
+        <div class="qrbox" id="qrcode"></div>
+        <div class="info">
+            <label>Link για το κοινό (ανοίγει στο κινητό):</label>
+            <input type="text" id="audienceUrlInput" onchange="saveAudienceUrl()">
+            <div class="hint">Άλλαξε αυτό το link όταν το audience.html φιλοξενηθεί online (π.χ. GitHub Pages URL) και πάτα Ενημέρωση QR.</div>
+            <button class="small" onclick="regenerateQR()">Ενημέρωση QR</button>
+        </div>
+    </div>
+
+    <div class="container" id="slideContainer"></div>
+
+    <div class="controls">
+        <button class="nav-btn" id="prevBtn" onclick="prevSlide()">← Προηγούμενο</button>
+        <div class="progress-text">
+            <span id="progress">1 / 1</span>
+            <button class="nav-btn reveal" id="revealBtn" onclick="revealAnswer()" style="display:none; margin-left:14px;">👁 Αποκάλυψη Απάντησης</button>
+        </div>
+        <button class="nav-btn primary" id="nextBtn" onclick="nextSlide()">Επόμενο →</button>
+    </div>
+</div>
+
+<!-- Firebase (compat SDK — plain <script> tags, no bundler needed) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="quiz-data.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<script>
+/* ================= CONFIG ================= */
+const MOD_PASSPHRASE = "deloitte2026"; // change this before the event if you want a different code
+const { SECTIONS, deck, QUESTION_INDEXES } = window.QUIZ_DATA;
+
+/* ================= GATE ================= */
+function tryUnlock() {
+    const val = document.getElementById('gatePass').value;
+    if (val === MOD_PASSPHRASE) {
+        document.getElementById('gate').style.display = 'none';
+        document.getElementById('app').style.display = 'block';
+        initApp();
+    } else {
+        document.getElementById('gateErr').textContent = 'Λάθος κωδικός.';
+    }
+}
+document.getElementById('gatePass').addEventListener('keydown', (e) => { if (e.key === 'Enter') tryUnlock(); });
+
+/* ================= FIREBASE ================= */
+firebase.initializeApp(window.FIREBASE_CONFIG);
+const db = firebase.database();
+const stateRef = db.ref('session/state');
+const votesRef = db.ref('session/votes');
+const presenceRef = db.ref('session/presence');
+
+let currentSlide = 0;
+let revealed = false;
+let muted = false;
+let currentVotes = {}; // {optionIndex: count} for the active slide
+
+function initApp() {
+    setupAudienceUrl();
+    listenPresence();
+    listenState();
+    renderSlide(); // initial paint before first snapshot arrives
+}
+
+/* ================= PRESENCE & VOTES (live) ================= */
+function listenPresence() {
+    presenceRef.on('value', (snap) => {
+        const val = snap.val() || {};
+        document.getElementById('presenceCount').textContent = Object.keys(val).length;
+    });
+}
+
+let votesListenerRef = null;
+function listenVotesForSlide(index) {
+    if (votesListenerRef) votesListenerRef.off();
+    votesListenerRef = votesRef.child(String(index));
+    votesListenerRef.on('value', (snap) => {
+        const val = snap.val() || {};
+        const counts = {};
+        Object.values(val).forEach((opt) => { counts[opt] = (counts[opt] || 0) + 1; });
+        currentVotes = counts;
+        const total = Object.values(counts).reduce((a, b) => a + b, 0);
+        document.getElementById('voteCount').textContent = total;
+        updateVoteBars();
+    });
+}
+
+/* ================= STATE SYNC ================= */
+function listenState() {
+    stateRef.on('value', (snap) => {
+        const val = snap.val() || { slide: 0, revealed: false };
+        currentSlide = val.slide || 0;
+        revealed = !!val.revealed;
+        listenVotesForSlide(currentSlide);
+        renderSlide();
+    });
+}
+
+function pushState(partial) {
+    stateRef.update(partial);
+}
+
+/* ================= NAVIGATION ================= */
+function nextSlide() {
+    const slide = deck[currentSlide];
+    const isQuestion = slide.type === 'scenario' || slide.type === 'rapidfire';
+    if (isQuestion && !revealed) return; // locked until revealed
+    if (currentSlide < deck.length - 1) {
+        pushState({ slide: currentSlide + 1, revealed: false });
+    }
+}
+function prevSlide() {
+    if (currentSlide > 0) {
+        pushState({ slide: currentSlide - 1, revealed: false });
+    }
+}
+function revealAnswer() {
+    pushState({ revealed: true });
+}
+function resetSession() {
+    if (!confirm('Σίγουρα θέλεις να μηδενίσεις όλες τις ψήφους και να ξαναρχίσεις από την αρχή;')) return;
+    votesRef.remove();
+    presenceRef.remove();
+    stateRef.set({ slide: 0, revealed: false });
+}
+
+/* ================= RENDER ================= */
+function sectionRefTag(section) {
+    const s = SECTIONS[section];
+    return s ? `${s.icon} ${s.name}` : "";
+}
+
+function renderSlide() {
+    const slide = deck[currentSlide];
+    const container = document.getElementById('slideContainer');
+    const isQuestion = slide.type === 'scenario' || slide.type === 'rapidfire';
+
+    let tagText = "Live Townhall Quiz — Moderator";
+    if (slide.section) tagText = sectionRefTag(slide.section);
+    else if (slide.type === 'summary') tagText = "🏁 Σύνοψη & Τελικό Σκορ";
+    else if (slide.type === 'agenda') tagText = "Ατζέντα";
+    document.getElementById('sectionTag').textContent = tagText;
+
+    document.getElementById('progress').textContent = `${currentSlide + 1} / ${deck.length}`;
+    document.getElementById('prevBtn').style.visibility = currentSlide === 0 ? 'hidden' : 'visible';
+    document.getElementById('nextBtn').style.visibility = currentSlide === deck.length - 1 ? 'hidden' : 'visible';
+
+    const locked = isQuestion && !revealed;
+    document.getElementById('nextBtn').classList.toggle('locked', locked);
+    document.getElementById('revealBtn').style.display = (isQuestion && !revealed) ? 'inline-block' : 'none';
+
+    if (slide.type === 'intro') {
+        container.innerHTML = `
+            <div class="slide-plain">
+                <h2>${slide.title}</h2>
+                <p>${slide.subtitle}</p>
+                <div class="rules-list"><ul style="list-style:none;padding:0;">
+                    ${slide.rules.map(r => `<li style="padding:10px 0;border-bottom:1px solid #222;">${r}</li>`).join('')}
+                </ul></div>
+            </div>`;
+    } else if (slide.type === 'agenda') {
+        container.innerHTML = `
+            <div class="scenario-title"><span>Ατζέντα Σημερινού Quiz</span></div>
+            <ul class="agenda-list">
+                ${slide.items.map(it => `<li><span class="a-icon">${it.icon}</span><span>${it.name}</span><span class="a-count">${it.count}</span></li>`).join('')}
+            </ul>`;
+    } else if (slide.type === 'divider') {
+        const s = SECTIONS[slide.section];
+        container.innerHTML = `
+            <div class="slide-plain">
+                <div style="color:var(--text-dim);font-size:13px;">Ενότητα ${slide.section} από 5</div>
+                <div style="font-size:44px;margin:10px 0;">${s.icon}</div>
+                <h2>${s.name}</h2>
+                <p>${slide.desc}</p>
+                <div style="color:var(--deloitte-green);font-weight:700;">${slide.count}</div>
+            </div>`;
+    } else if (slide.type === 'info') {
+        container.innerHTML = `
+            <div class="slide-plain">
+                <div style="color:var(--warn-amber);text-transform:uppercase;font-size:13px;letter-spacing:1.2px;font-weight:700;">${slide.tag}</div>
+                <h2>${slide.lead}</h2>
+                ${slide.cards.map(c => `<div style="margin:14px 0;"><strong style="color:var(--error-red);">${c.h}:</strong> ${c.p}</div>`).join('')}
+                <div class="explanation show"><span class="citation">📖 ${slide.footnote}</span></div>
+            </div>`;
+    } else if (slide.type === 'scenario' || slide.type === 'rapidfire') {
+        let optionsHtml = '';
+        slide.options.forEach((opt, i) => {
+            optionsHtml += `
+                <div class="option-row" id="opt-${i}">
+                    <span class="key-hint">${i + 1}</span>
+                    <div class="bar-wrap">
+                        <div>${opt}</div>
+                        <div class="bar-track"><div class="bar-fill" id="bar-${i}" style="width:0%"></div></div>
+                        <span class="pct" id="pct-${i}"></span>
+                    </div>
+                </div>`;
+        });
+        container.innerHTML = `
+            <div class="scenario-title">
+                <span class="badge-icon">${slide.icon || ''}</span>
+                <span>${slide.title}</span>
+            </div>
+            <div class="question">${slide.question}</div>
+            <div class="vote-counter">🖐 Το κοινό ψηφίζει από το κινητό του...</div>
+            <div class="options">${optionsHtml}</div>
+            <div class="explanation" id="explanation">
+                <strong>Επεξήγηση:</strong> ${slide.explanation}
+                ${slide.ref ? `<span class="citation">📖 ${slide.ref}</span>` : ''}
+            </div>`;
+        updateVoteBars();
+    } else if (slide.type === 'summary') {
+        const stats = computeRoomStats();
+        container.innerHTML = `
+            <div class="scenario-title" style="color:var(--deloitte-green);"><span>🏁 Σύνοψη</span></div>
+            <div class="question" style="color:var(--deloitte-green);font-size:26px;">Οι 4 Χρυσοί Κανόνες της Κάρτας</div>
+            <ul class="rules-list">${slide.rules.map(r => `<li>${r}</li>`).join('')}</ul>
+            <div class="final-score">
+                <div class="fs-num">${stats.pct}%</div>
+                <div class="fs-tier">${stats.tier} — μέση ακρίβεια αίθουσας σε ${stats.answered}/${QUESTION_INDEXES.length} ερωτήσεις</div>
+            </div>
+            <div class="explanation show"><span class="citation">${slide.sources}</span></div>`;
+    }
+}
+
+function updateVoteBars() {
+    const slide = deck[currentSlide];
+    if (!slide || !(slide.type === 'scenario' || slide.type === 'rapidfire')) return;
+    const total = Object.values(currentVotes).reduce((a, b) => a + b, 0);
+
+    slide.options.forEach((opt, i) => {
+        const row = document.getElementById(`opt-${i}`);
+        const bar = document.getElementById(`bar-${i}`);
+        const pctEl = document.getElementById(`pct-${i}`);
+        if (!row) return;
+        const count = currentVotes[i] || 0;
+        const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+
+        if (revealed) {
+            bar.style.width = pct + '%';
+            pctEl.textContent = `${count} ψήφοι (${pct}%)`;
+            row.classList.toggle('correct', i === slide.correct);
+        } else {
+            // hide the breakdown pre-reveal so the room doesn't just follow the crowd
+            bar.style.width = '0%';
+            pctEl.textContent = '';
+            row.classList.remove('correct');
+        }
+    });
+
+    const explanation = document.getElementById('explanation');
+    if (explanation) explanation.classList.toggle('show', revealed);
+    document.querySelector('.vote-counter').textContent = revealed
+        ? `✅ Αποκαλύφθηκε η σωστή απάντηση — σύνολο ${total} ψήφων`
+        : `🖐 Το κοινό ψηφίζει από το κινητό του... (${total} έχουν απαντήσει)`;
+}
+
+function computeRoomStats() {
+    // best-effort synchronous snapshot using the last known values we've received live;
+    // for a fully accurate final tally, this reads whatever is cached from prior listeners.
+    let sumPct = 0, answered = 0;
+    QUESTION_INDEXES.forEach((idx) => {
+        // we only have live data for the slide currently being viewed; for a true final
+        // readout, actual per-slide data is fetched on demand below.
+    });
+    return { pct: 0, tier: 'Υπολογισμός...', answered: 0 };
+}
+
+// Real final stats: fetch all vote nodes once when the summary slide is shown.
+async function computeRoomStatsAsync() {
+    const snap = await votesRef.get();
+    const allVotes = snap.val() || {};
+    let sumPct = 0, answeredQuestions = 0;
+    QUESTION_INDEXES.forEach((idx) => {
+        const slide = deck[idx];
+        const votesForSlide = allVotes[idx] || {};
+        const values = Object.values(votesForSlide);
+        if (values.length === 0) return;
+        const correctCount = values.filter(v => v === slide.correct).length;
+        sumPct += (correctCount / values.length) * 100;
+        answeredQuestions++;
+    });
+    const pct = answeredQuestions > 0 ? Math.round(sumPct / QUESTION_INDEXES.length) : 0;
+    let tier = "📚 Ας τα ξαναδούμε μαζί με το HR!";
+    if (pct >= 90) tier = "🏆 Άριστα! Η αίθουσα ξέρει τη διαδικασία απέξω κι ανακατωτά.";
+    else if (pct >= 70) tier = "👏 Πολύ καλά! Λίγες λεπτομέρειες ακόμα να θυμόμαστε.";
+    else if (pct >= 50) tier = "🙂 Καλή αρχή — ας κρατήσουμε τους 4 Χρυσούς Κανόνες.";
+    return { pct, tier, answered: answeredQuestions };
+}
+
+/* patch: re-render the summary slide once the async stats resolve */
+const _origRenderSlide = renderSlide;
+renderSlide = function () {
+    _origRenderSlide();
+    if (deck[currentSlide].type === 'summary') {
+        computeRoomStatsAsync().then((stats) => {
+            const numEl = document.querySelector('.fs-num');
+            const tierEl = document.querySelector('.fs-tier');
+            if (numEl) numEl.textContent = stats.pct + '%';
+            if (tierEl) tierEl.textContent = `${stats.tier} — μέση ακρίβεια αίθουσας σε ${stats.answered}/${QUESTION_INDEXES.length} ερωτήσεις`;
+        });
+    }
+};
+
+/* ================= JOIN PANEL / QR ================= */
+function setupAudienceUrl() {
+    const saved = localStorage.getItem('audienceUrl') || (location.href.replace(/moderator\.html.*$/, 'audience.html'));
+    document.getElementById('audienceUrlInput').value = saved;
+    renderQR(saved);
+}
+function saveAudienceUrl() {
+    const val = document.getElementById('audienceUrlInput').value.trim();
+    localStorage.setItem('audienceUrl', val);
+}
+function regenerateQR() {
+    saveAudienceUrl();
+    renderQR(document.getElementById('audienceUrlInput').value.trim());
+}
+function renderQR(url) {
+    const box = document.getElementById('qrcode');
+    box.innerHTML = '';
+    if (!url) return;
+    try { new QRCode(box, { text: url, width: 180, height: 180 }); } catch (e) { /* qrcode lib not loaded (offline) */ }
+}
+function toggleJoinPanel() {
+    const p = document.getElementById('joinPanel');
+    p.style.display = p.style.display === 'none' ? 'flex' : 'none';
+}
+
+function toggleMute() {
+    muted = !muted;
+    document.getElementById('muteBtn').textContent = muted ? '🔇' : '🔊';
+}
+
+/* ================= KEYBOARD ================= */
+window.addEventListener('keydown', (e) => {
+    if (document.getElementById('gate').style.display === 'none') {
+        if (['ArrowRight', 'PageDown'].includes(e.key)) nextSlide();
+        else if (['ArrowLeft', 'PageUp'].includes(e.key)) prevSlide();
+        else if (e.key.toLowerCase() === 'r') revealAnswer();
+    }
+});
+</script>
+</body>
+</html>
