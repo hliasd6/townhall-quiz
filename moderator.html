@@ -5,16 +5,54 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Ψηφιακή Κάρτα Εργασίας — Moderator (Live)</title>
 <style>
+    /* ══════════════════════════════════════════════════════════════════
+       DESIGN TOKENS — light theme, blue + green brand palette
+       (aligned with the rest of the townhall deliverables)
+       Every raw colour lives here; everything below uses var().
+       ══════════════════════════════════════════════════════════════════ */
     :root {
-        --deloitte-green: #86BC25;
-        --deloitte-green-dark: #5b8014;
-        --bg-color: #0A0A0A;
-        --bg-color-2: #141414;
-        --text-color: #FFFFFF;
-        --text-dim: #9A9A9A;
-        --error-red: #E3000F;
-        --warn-amber: #C9A227;
-        --info-blue: #2E7DD1;
+        /* ── Brand ─────────────────────────────────────────────────── */
+        --deloitte-green:      #86BC25;   /* accent / "correct" signal    */
+        --deloitte-green-dark: #5B8014;
+        --green-ink:           #3F6009;   /* green that reads on white    */
+        --green-tint:          #F1F8E3;
+        --green-tint-2:        #E4F2CC;
+        --brand-blue:          #0066CC;   /* primary action / data        */
+        --brand-blue-dark:     #004E9E;
+        --brand-cyan:          #00A3E0;
+        --blue-tint:           #EBF3FB;
+        --blue-tint-2:         #D8E8F8;
+
+        /* ── Surfaces ──────────────────────────────────────────────── */
+        --bg-color:    #F4F7FB;           /* page                        */
+        --bg-color-2:  #FFFFFF;           /* cards, bars, panels         */
+        --bg-color-3:  #EEF3F9;           /* recessed (tracks, chips)    */
+        --hair:        #E2E8F0;
+        --hair-strong: #C9D6E5;
+
+        /* ── Text ──────────────────────────────────────────────────── */
+        --text-color: #10233A;
+        --text-dim:   #5B6B7F;
+
+        /* ── Status ────────────────────────────────────────────────── */
+        --error-red:  #C8102E;
+        --error-tint: #FDEDEF;
+        --warn-amber: #A66A00;
+        --warn-tint:  #FCF3E2;
+        --info-blue:  #0066CC;
+
+        /* ── Overlay (QR takeover — dark so the code pops on screen) ─ */
+        --overlay:    rgba(9, 24, 43, 0.94);
+        --on-overlay: #C7D6E6;
+
+        /* ── Shape ─────────────────────────────────────────────────── */
+        --r-sm: 8px;
+        --r-md: 12px;
+        --r-lg: 18px;
+        --sh-1: 0 1px 2px rgba(16, 35, 58, 0.06);
+        --sh-2: 0 6px 18px rgba(16, 35, 58, 0.08);
+        --sh-3: 0 18px 44px rgba(16, 35, 58, 0.16);
+        --focus-ring: 0 0 0 3px rgba(0, 102, 204, 0.20);
     }
     * { box-sizing: border-box; }
     body {
@@ -23,123 +61,185 @@
         background: var(--bg-color);
         color: var(--text-color);
         min-height: 100vh;
+        -webkit-font-smoothing: antialiased;
     }
 
     /* ---------- Passphrase gate ---------- */
     #gate {
         position: fixed; inset: 0; z-index: 2000;
         display: flex; flex-direction: column; align-items: center; justify-content: center;
-        background: var(--bg-color); gap: 18px;
+        background: var(--bg-color-2);
+        background-image: radial-gradient(120% 80% at 50% 0%, var(--blue-tint) 0%, var(--bg-color-2) 62%);
+        gap: 18px;
     }
-    #gate h1 { color: var(--deloitte-green); font-size: 22px; margin: 0; }
+    #gate h1 { color: var(--brand-blue-dark); font-size: 22px; margin: 0; }
     #gate input {
-        background: var(--bg-color-2); border: 1px solid #333; color: var(--text-color);
-        padding: 12px 16px; border-radius: 8px; font-size: 16px; width: 260px; text-align: center;
+        background: var(--bg-color-2); border: 1px solid var(--hair-strong); color: var(--text-color);
+        padding: 12px 16px; border-radius: var(--r-sm); font-size: 16px; width: 260px; text-align: center;
+        box-shadow: var(--sh-1); font-family: inherit;
     }
+    #gate input:focus { outline: none; border-color: var(--brand-blue); box-shadow: var(--focus-ring); }
     #gate button {
-        background: var(--deloitte-green); border: none; color: black; font-weight: 700;
-        padding: 12px 28px; border-radius: 8px; font-size: 15px; cursor: pointer;
+        background: var(--brand-blue); border: none; color: var(--bg-color-2); font-weight: 700;
+        padding: 12px 28px; border-radius: var(--r-sm); font-size: 15px; cursor: pointer;
+        box-shadow: var(--sh-2); font-family: inherit;
     }
-    #gate .err { color: var(--error-red); font-size: 13px; min-height: 16px; }
+    #gate button:hover { background: var(--brand-blue-dark); }
+    #gate .err { color: var(--error-red); font-size: 13px; min-height: 16px; font-weight: 600; }
 
     /* ---------- Header ---------- */
     .header {
+        position: sticky; top: 0; z-index: 20;
         display: flex; justify-content: space-between; align-items: center;
-        padding: 14px 28px; border-bottom: 2px solid var(--deloitte-green); flex-wrap: wrap; gap: 10px;
+        padding: 16px 28px 14px; background: var(--bg-color-2);
+        border-bottom: 1px solid var(--hair); box-shadow: var(--sh-1);
+        flex-wrap: wrap; gap: 10px;
+    }
+    .header::before {
+        content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+        background: linear-gradient(90deg, var(--deloitte-green), var(--brand-blue));
     }
     .brand { display: flex; align-items: center; gap: 12px; }
-    .brand .dot { width: 12px; height: 12px; border-radius: 50%; background: var(--deloitte-green); }
-    .brand h1 { font-size: 19px; margin: 0; }
+    .brand .dot {
+        width: 12px; height: 12px; border-radius: 50%;
+        background: var(--deloitte-green); box-shadow: 0 0 0 4px var(--green-tint);
+    }
+    .brand h1 { font-size: 19px; margin: 0; color: var(--text-color); letter-spacing: -0.2px; }
     .brand .tag { color: var(--text-dim); font-size: 13px; }
-    .hdr-controls { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+    .hdr-controls { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
     .pill {
-        display: flex; align-items: center; gap: 6px; background: var(--bg-color-2);
-        border: 1px solid #262626; border-radius: 20px; padding: 6px 14px; font-size: 13px;
+        display: flex; align-items: center; gap: 6px; background: var(--blue-tint);
+        border: 1px solid var(--blue-tint-2); border-radius: 20px; padding: 6px 14px;
+        font-size: 13px; color: var(--brand-blue-dark); font-weight: 600;
     }
-    .pill .n { color: var(--deloitte-green); font-weight: 800; font-size: 15px; }
+    .pill .n { color: var(--brand-blue); font-weight: 800; font-size: 15px; }
     .icon-btn {
-        background: transparent; border: 1px solid #333; color: var(--text-color);
-        width: 38px; height: 38px; border-radius: 8px; cursor: pointer; font-size: 16px;
+        background: var(--bg-color-2); border: 1px solid var(--hair-strong); color: var(--text-color);
+        width: 38px; height: 38px; border-radius: var(--r-sm); cursor: pointer; font-size: 16px;
+        transition: background 0.15s ease, border-color 0.15s ease;
     }
-    .icon-btn:hover { border-color: var(--deloitte-green); background: rgba(134,188,37,0.12); }
+    .icon-btn:hover { border-color: var(--brand-blue); background: var(--blue-tint); }
 
     /* ---------- QR overlay (shows ONLY the QR code, nothing else) ---------- */
     #joinPanel {
         display: none; position: fixed; inset: 0; z-index: 999;
-        background: rgba(0,0,0,0.92);
+        background: var(--overlay);
         align-items: center; justify-content: center; cursor: pointer;
     }
     #joinPanel .qrbox {
-        background: white; padding: 28px; border-radius: 18px; line-height: 0;
-        box-shadow: 0 0 60px rgba(134,188,37,0.35);
+        background: var(--bg-color-2); padding: 28px; border-radius: var(--r-lg); line-height: 0;
+        box-shadow: 0 0 0 8px rgba(134, 188, 37, 0.30), var(--sh-3);
     }
     #joinPanel .qr-hint {
         position: absolute; bottom: 40px; left: 0; right: 0; text-align: center;
-        color: var(--text-dim); font-size: 13px; letter-spacing: 0.5px;
+        color: var(--on-overlay); font-size: 13px; letter-spacing: 0.5px;
     }
     /* hidden but still present in DOM so the auto-detected audience URL logic keeps working */
     #audienceUrlInput, #joinPanel .info { display: none; }
 
     /* ---------- Slide area (reused look & feel) ---------- */
-    .container { max-width: 900px; margin: 0 auto; padding: 40px 30px; min-height: 45vh; }
+    .container { max-width: 900px; margin: 0 auto; padding: 40px 30px; min-height: calc(100vh - 152px); }
     .scenario-title {
-        display: flex; align-items: center; gap: 10px; color: var(--deloitte-green);
+        display: flex; align-items: center; gap: 14px; color: var(--green-ink);
         font-size: 15px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 18px;
     }
-    .badge-icon { font-size: 22px; }
-    .question { font-size: 24px; font-weight: 600; margin-bottom: 26px; line-height: 1.4; }
+    .badge-icon {
+        font-size: 22px; width: 44px; height: 44px; flex-shrink: 0;
+        display: inline-flex; align-items: center; justify-content: center;
+        background: var(--green-tint); border-radius: var(--r-md);
+    }
+    .question { font-size: 24px; font-weight: 600; margin-bottom: 26px; line-height: 1.4; color: var(--text-color); }
     .options { display: flex; flex-direction: column; gap: 14px; }
     .option-row {
-        display: flex; align-items: center; gap: 14px; padding: 16px 20px; border-radius: 10px;
-        border: 1px solid #333; background: var(--bg-color-2); font-size: 17px;
+        display: flex; align-items: center; gap: 14px; padding: 16px 20px; border-radius: var(--r-md);
+        border: 1px solid var(--hair); background: var(--bg-color-2); font-size: 17px;
+        box-shadow: var(--sh-1); transition: border-color 0.25s ease, background 0.25s ease;
     }
     .option-row .key-hint {
         display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px;
-        border-radius: 50%; background: #262626; font-size: 13px; font-weight: 700; flex-shrink: 0;
+        border-radius: 50%; background: var(--bg-color-3); color: var(--text-dim);
+        font-size: 13px; font-weight: 700; flex-shrink: 0;
     }
     .option-row .bar-wrap { flex: 1; }
-    .option-row .bar-track { background: #262626; border-radius: 6px; height: 10px; overflow: hidden; margin-top: 8px; }
-    .option-row .bar-fill { height: 100%; background: var(--info-blue); transition: width 0.5s ease; }
-    .option-row.correct { border-color: var(--deloitte-green); background: rgba(134,188,37,0.12); }
+    .option-row .bar-track { background: var(--bg-color-3); border-radius: 6px; height: 10px; overflow: hidden; margin-top: 8px; }
+    .option-row .bar-fill { height: 100%; background: var(--info-blue); border-radius: 6px; transition: width 0.5s ease; }
+    .option-row.correct {
+        border-color: var(--deloitte-green); background: var(--green-tint);
+        box-shadow: inset 4px 0 0 var(--deloitte-green), var(--sh-1);
+    }
+    .option-row.correct .key-hint { background: var(--green-tint-2); color: var(--green-ink); }
     .option-row.correct .bar-fill { background: var(--deloitte-green); }
     .option-row .pct { font-size: 13px; color: var(--text-dim); margin-top: 4px; display: block; }
     .vote-counter { color: var(--text-dim); font-size: 15px; margin: 10px 0 20px; }
     .explanation {
-        margin-top: 26px; padding: 20px; border-radius: 10px; border-left: 4px solid var(--deloitte-green);
-        background: rgba(255,255,255,0.04); font-size: 17px; line-height: 1.55; display: none;
+        margin-top: 26px; padding: 20px 22px; border-radius: var(--r-md);
+        border-left: 4px solid var(--deloitte-green);
+        background: linear-gradient(90deg, var(--green-tint) 0%, var(--blue-tint) 100%);
+        font-size: 17px; line-height: 1.55; color: var(--text-color); display: none;
     }
     .explanation.show { display: block; }
     .explanation .citation { display: block; margin-top: 10px; font-size: 12.5px; color: var(--text-dim); font-style: italic; }
 
-    .slide-plain h2 { color: var(--deloitte-green); font-size: 26px; }
+    .slide-plain h2 { color: var(--brand-blue-dark); font-size: 26px; margin: 10px 0 6px; letter-spacing: -0.3px; }
+    .slide-plain h2::after {
+        content: ''; display: block; width: 112px; height: 4px; margin-top: 12px; border-radius: 2px;
+        background: linear-gradient(90deg, var(--deloitte-green), var(--brand-blue));
+    }
     .slide-plain p { font-size: 18px; color: var(--text-dim); line-height: 1.6; }
-    .agenda-list { list-style: none; padding: 0; margin: 0; max-width: 640px; text-align: left; }
-    .agenda-list li { display: flex; align-items: center; gap: 14px; padding: 12px 0; border-bottom: 1px solid #222; }
+    .agenda-list { list-style: none; padding: 0; margin: 0; max-width: 640px; text-align: left; display: flex; flex-direction: column; gap: 10px; }
+    .agenda-list li {
+        display: flex; align-items: center; gap: 14px; padding: 14px 18px;
+        background: var(--bg-color-2); border: 1px solid var(--hair); border-left: 3px solid var(--deloitte-green);
+        border-radius: var(--r-md); box-shadow: var(--sh-1);
+    }
     .agenda-list .a-icon { font-size: 22px; width: 30px; text-align: center; }
-    .agenda-list .a-count { margin-left: auto; color: var(--text-dim); font-size: 13px; }
-    .rules-list { list-style: none; padding: 0; margin: 20px 0; }
-    .rules-list li { padding: 12px 0; border-bottom: 1px solid #222; font-size: 17px; line-height: 1.5; }
-    .final-score { margin-top: 20px; }
-    .final-score .fs-num { font-size: 46px; font-weight: 800; color: var(--deloitte-green); }
-    .final-score .fs-tier { font-size: 17px; color: var(--text-dim); margin-top: 4px; }
+    .agenda-list .a-count { margin-left: auto; color: var(--brand-blue); font-size: 13px; font-weight: 600; }
+    .rules-list { list-style: none; padding: 0; margin: 20px 0; display: flex; flex-direction: column; gap: 10px; }
+    .rules-list li {
+        padding: 14px 18px; font-size: 17px; line-height: 1.5;
+        background: var(--bg-color-2); border: 1px solid var(--hair); border-left: 3px solid var(--brand-cyan);
+        border-radius: var(--r-md); box-shadow: var(--sh-1);
+    }
+    .final-score {
+        margin-top: 20px; padding: 22px 24px; background: var(--bg-color-2);
+        border: 1px solid var(--hair); border-top: 3px solid var(--deloitte-green);
+        border-radius: var(--r-md); box-shadow: var(--sh-2);
+    }
+    .final-score .fs-num { font-size: 46px; font-weight: 800; color: var(--brand-blue); line-height: 1.1; }
+    .final-score .fs-tier { font-size: 17px; color: var(--text-dim); margin-top: 6px; }
 
     /* ---------- Bottom controls ---------- */
     .controls {
         display: flex; align-items: center; justify-content: space-between;
-        padding: 18px 28px; border-top: 1px solid #222; gap: 14px; flex-wrap: wrap;
+        padding: 18px 28px; background: var(--bg-color-2);
+        border-top: 1px solid var(--hair); gap: 14px; flex-wrap: wrap;
     }
     .nav-btn {
-        background: transparent; border: 1px solid #333; color: var(--text-color); padding: 12px 24px;
-        border-radius: 8px; cursor: pointer; font-size: 15px;
+        background: var(--bg-color-2); border: 1px solid var(--hair-strong); color: var(--text-color);
+        padding: 12px 24px; border-radius: var(--r-sm); cursor: pointer; font-size: 15px;
+        font-family: inherit; transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
     }
-    .nav-btn:hover { background: white; color: black; }
-    .nav-btn.primary { background: var(--deloitte-green); border-color: var(--deloitte-green); color: black; font-weight: 700; }
-    .nav-btn.primary:hover { background: #6a961d; }
-    .nav-btn.primary.locked { background: #2a2a2a; border-color: #444; color: #777; cursor: not-allowed; }
-    .nav-btn.reveal { background: var(--warn-amber); border-color: var(--warn-amber); color: black; font-weight: 700; }
-    .nav-btn.reveal:disabled { background: #2a2a2a; border-color: #444; color: #777; cursor: not-allowed; }
+    .nav-btn:hover { background: var(--blue-tint); border-color: var(--brand-blue); color: var(--brand-blue-dark); }
+    .nav-btn.primary {
+        background: var(--brand-blue); border-color: var(--brand-blue); color: var(--bg-color-2);
+        font-weight: 700; box-shadow: var(--sh-2);
+    }
+    .nav-btn.primary:hover { background: var(--brand-blue-dark); border-color: var(--brand-blue-dark); color: var(--bg-color-2); }
+    .nav-btn.primary.locked {
+        background: var(--bg-color-3); border-color: var(--hair); color: var(--text-dim);
+        cursor: not-allowed; box-shadow: none;
+    }
+    .nav-btn.reveal {
+        background: var(--deloitte-green); border-color: var(--deloitte-green); color: var(--green-ink);
+        font-weight: 700; box-shadow: var(--sh-2);
+    }
+    .nav-btn.reveal:hover { background: var(--deloitte-green); border-color: var(--deloitte-green-dark); color: var(--green-ink); filter: brightness(1.05); }
+    .nav-btn.reveal:disabled {
+        background: var(--bg-color-3); border-color: var(--hair); color: var(--text-dim);
+        cursor: not-allowed; box-shadow: none; filter: none;
+    }
     .nav-btn.danger { border-color: var(--error-red); color: var(--error-red); }
-    .nav-btn.danger:hover { background: var(--error-red); color: white; }
+    .nav-btn.danger:hover { background: var(--error-red); border-color: var(--error-red); color: var(--bg-color-2); }
     .progress-text { text-align: center; color: var(--text-dim); font-size: 13px; }
 </style>
 </head>
@@ -326,7 +426,7 @@ function renderSlide() {
                 <h2>${slide.title}</h2>
                 <p>${slide.subtitle}</p>
                 <div class="rules-list"><ul style="list-style:none;padding:0;">
-                    ${slide.rules.map(r => `<li style="padding:10px 0;border-bottom:1px solid #222;">${r}</li>`).join('')}
+                    ${slide.rules.map(r => `<li>${r}</li>`).join('')}
                 </ul></div>
             </div>`;
     } else if (slide.type === 'agenda') {
@@ -343,7 +443,7 @@ function renderSlide() {
                 <div style="font-size:44px;margin:10px 0;">${s.icon}</div>
                 <h2>${s.name}</h2>
                 <p>${slide.desc}</p>
-                <div style="color:var(--deloitte-green);font-weight:700;">${slide.count}</div>
+                <div style="color:var(--green-ink);font-weight:700;">${slide.count}</div>
             </div>`;
     } else if (slide.type === 'info') {
         container.innerHTML = `
@@ -382,8 +482,8 @@ function renderSlide() {
     } else if (slide.type === 'summary') {
         const stats = computeRoomStats();
         container.innerHTML = `
-            <div class="scenario-title" style="color:var(--deloitte-green);"><span>🏁 Σύνοψη</span></div>
-            <div class="question" style="color:var(--deloitte-green);font-size:26px;">Οι 4 Χρυσοί Κανόνες της Κάρτας</div>
+            <div class="scenario-title" style="color:var(--green-ink);"><span>🏁 Σύνοψη</span></div>
+            <div class="question" style="color:var(--green-ink);font-size:26px;">Οι 4 Χρυσοί Κανόνες της Κάρτας</div>
             <ul class="rules-list">${slide.rules.map(r => `<li>${r}</li>`).join('')}</ul>
             <div class="final-score">
                 <div class="fs-num">${stats.pct}%</div>
