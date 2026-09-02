@@ -358,25 +358,11 @@ function listenVotesForSlide(index) {
 
 /* ================= STATE SYNC ================= */
 function listenState() {
-    // stateRef.on('value', (snap) => {
-    //     const val = snap.val() || { slide: 0, revealed: false };
-    //     currentSlide = val.slide || 0;
-    //     revealed = !!val.revealed;
-    //     listenVotesForSlide(currentSlide);
-    //     renderSlide();
-    // });
     stateRef.on('value', (snap) => {
         const val = snap.val() || { slide: 0, revealed: false };
-        
-        // ΝΕΟ: Αν ο moderator κάνει reset (slide 0), διαγράφουμε τις τοπικές απαντήσεις!
-        if (val.slide === 0 && !val.revealed) {
-            sessionStorage.removeItem('myAnswers');
-            // Μηδενίζουμε και το σκορ πάνω δεξιά
-            document.getElementById('myScore').textContent = '0';
-        }
-
         currentSlide = val.slide || 0;
         revealed = !!val.revealed;
+        listenVotesForSlide(currentSlide); // ΑΥΤΗ Η ΓΡΑΜΜΗ ΕΙΧΕ ΣΒΗΣΤΕΙ, ΤΗΝ ΕΠΑΝΑΦΕΡΑΜΕ!
         renderSlide();
     });
 }
@@ -440,7 +426,7 @@ function renderSlide() {
                 <h2>${slide.title}</h2>
                 <p>${slide.subtitle}</p>
                 <div class="rules-list"><ul style="list-style:none;padding:0;">
-                    ${slide.rules.map(r => `<li>${r}</li>`).join('')}
+                    ${slide.rules.map(r => `<li style="padding:10px 0;border-bottom:1px solid #222;">${r}</li>`).join('')}
                 </ul></div>
             </div>`;
     } else if (slide.type === 'agenda') {
@@ -457,7 +443,7 @@ function renderSlide() {
                 <div style="font-size:44px;margin:10px 0;">${s.icon}</div>
                 <h2>${s.name}</h2>
                 <p>${slide.desc}</p>
-                <div style="color:var(--green-ink);font-weight:700;">${slide.count}</div>
+                <div style="color:var(--deloitte-green);font-weight:700;">${slide.count}</div>
             </div>`;
     } else if (slide.type === 'info') {
         container.innerHTML = `
@@ -496,8 +482,8 @@ function renderSlide() {
     } else if (slide.type === 'summary') {
         const stats = computeRoomStats();
         container.innerHTML = `
-            <div class="scenario-title" style="color:var(--green-ink);"><span>🏁 Σύνοψη</span></div>
-            <div class="question" style="color:var(--green-ink);font-size:26px;">Οι 4 Χρυσοί Κανόνες της Κάρτας</div>
+            <div class="scenario-title" style="color:var(--deloitte-green);"><span>🏁 Σύνοψη</span></div>
+            <div class="question" style="color:var(--deloitte-green);font-size:26px;">Οι 4 Χρυσοί Κανόνες της Κάρτας</div>
             <ul class="rules-list">${slide.rules.map(r => `<li>${r}</li>`).join('')}</ul>
             <div class="final-score">
                 <div class="fs-num">${stats.pct}%</div>
