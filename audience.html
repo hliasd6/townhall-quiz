@@ -217,15 +217,6 @@ function getClientId() {
 const clientId = getClientId();
 
 /* personal answer record kept locally: { [slideIndex]: optionIndex } */
-// function getMyAnswers() {
-//     try { return JSON.parse(localStorage.getItem('myAnswers') || '{}'); } catch (e) { return {}; }
-// }
-// function saveMyAnswer(slideIndex, optionIndex) {
-//     const all = getMyAnswers();
-//     all[slideIndex] = optionIndex;
-//     localStorage.setItem('myAnswers', JSON.stringify(all));
-// }
-
 function getMyAnswers() {
     try { return JSON.parse(sessionStorage.getItem('myAnswers') || '{}'); } catch (e) { return {}; }
 }
@@ -261,6 +252,13 @@ function joinQuiz() {
 
     stateRef.on('value', (snap) => {
         const val = snap.val() || { slide: 0, revealed: false };
+        
+        // ΟΤΑΝ Ο MODERATOR ΚΑΝΕΙ RESET: Μηδενίζουμε το σκορ και τις απαντήσεις στο κοινό!
+        if (val.slide === 0 && !val.revealed) {
+            sessionStorage.removeItem('myAnswers');
+            document.getElementById('myScore').textContent = '0';
+        }
+
         currentSlide = val.slide || 0;
         revealed = !!val.revealed;
         renderSlide();
