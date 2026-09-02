@@ -358,11 +358,25 @@ function listenVotesForSlide(index) {
 
 /* ================= STATE SYNC ================= */
 function listenState() {
+    // stateRef.on('value', (snap) => {
+    //     const val = snap.val() || { slide: 0, revealed: false };
+    //     currentSlide = val.slide || 0;
+    //     revealed = !!val.revealed;
+    //     listenVotesForSlide(currentSlide);
+    //     renderSlide();
+    // });
     stateRef.on('value', (snap) => {
         const val = snap.val() || { slide: 0, revealed: false };
+        
+        // ΝΕΟ: Αν ο moderator κάνει reset (slide 0), διαγράφουμε τις τοπικές απαντήσεις!
+        if (val.slide === 0 && !val.revealed) {
+            sessionStorage.removeItem('myAnswers');
+            // Μηδενίζουμε και το σκορ πάνω δεξιά
+            document.getElementById('myScore').textContent = '0';
+        }
+
         currentSlide = val.slide || 0;
         revealed = !!val.revealed;
-        listenVotesForSlide(currentSlide);
         renderSlide();
     });
 }
