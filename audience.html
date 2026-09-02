@@ -217,13 +217,22 @@ function getClientId() {
 const clientId = getClientId();
 
 /* personal answer record kept locally: { [slideIndex]: optionIndex } */
+// function getMyAnswers() {
+//     try { return JSON.parse(localStorage.getItem('myAnswers') || '{}'); } catch (e) { return {}; }
+// }
+// function saveMyAnswer(slideIndex, optionIndex) {
+//     const all = getMyAnswers();
+//     all[slideIndex] = optionIndex;
+//     localStorage.setItem('myAnswers', JSON.stringify(all));
+// }
+
 function getMyAnswers() {
-    try { return JSON.parse(localStorage.getItem('myAnswers') || '{}'); } catch (e) { return {}; }
+    try { return JSON.parse(sessionStorage.getItem('myAnswers') || '{}'); } catch (e) { return {}; }
 }
 function saveMyAnswer(slideIndex, optionIndex) {
     const all = getMyAnswers();
     all[slideIndex] = optionIndex;
-    localStorage.setItem('myAnswers', JSON.stringify(all));
+    sessionStorage.setItem('myAnswers', JSON.stringify(all));
 }
 
 /* ================= FIREBASE ================= */
