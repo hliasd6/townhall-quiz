@@ -12,7 +12,7 @@ const SECTIONS = {
     2: { name: "Ειδικές Περιπτώσεις Εργασίας", icon: "🏢" },
     3: { name: "Αποκλίσεις & Τεχνικά Θέματα",  icon: "⚠"  },
     4: { name: "Ειδικοί Κανόνες & Εξαιρέσεις", icon: "★"  },
-    5: { name: "Γρήγορος Γύρος Σ/Λ",           icon: "⚡" }
+    5: { name: "Γρήγορος Γύρος",               icon: "⚡" }
 };
 
 const REF_GUIDE = "Πρακτικός Οδηγός Χρήσης Ψηφιακής Κάρτας Εργασίας";
@@ -39,7 +39,7 @@ deck.push({
     items: [
         { icon: SECTIONS[1].icon, name: SECTIONS[1].name, count: "4 σενάρια" },
         { icon: SECTIONS[2].icon, name: SECTIONS[2].name, count: "4 σενάρια" },
-        { icon: SECTIONS[3].icon, name: SECTIONS[3].name, count: "3 σενάρια + 1 ενημέρωση" },
+        { icon: SECTIONS[3].icon, name: SECTIONS[3].name, count: "3 σενάρια" },
         { icon: SECTIONS[4].icon, name: SECTIONS[4].name, count: "3 σενάρια" },
         { icon: SECTIONS[5].icon, name: SECTIONS[5].name, count: "3 Σ/Λ" },
         { icon: "🏁", name: "Σύνοψη & Τελικό Σκορ", count: "" }
